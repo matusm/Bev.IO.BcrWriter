@@ -5,7 +5,7 @@
 // Usage:
 //   1) instantiate class;
 //   2) provide required properties;
-//   3) provide topography data (as array or list) by calling PrepareMainSection(double[]);
+//   3) provide topography data by calling PrepareMainSection(double[] or int[]);
 //   4) optionally produce a file trailer by calling PrepareTrailerSection(Dictonary<string, string>);
 //   5) finally produce the output file by calling WriteToFile(string).
 //
@@ -16,7 +16,6 @@
 // Known problems and restrictions:
 //   most properties must be set in advance, otherwise no output will be generated
 //   NumberOfPointsPerProfile and NumberOfProfiles must not be modified during operation
-//   only double data is supported
 //
 // Author: Michael Matus, 2017
 //   1.1.0	support for int data, 2020
