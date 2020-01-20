@@ -59,6 +59,11 @@ namespace Bev.IO.BcrWriter
         public bool IsIsoFormat { get; set; }
 
         /// <summary>
+        /// If true, allow >65535 points per profile and profiles
+        /// </summary>
+        public bool Relaxed { get; set; }
+
+        /// <summary>
         /// If true forces the ".SDF" extension for the output file name.
         /// </summary>
         public bool ForceDefaultFileExtension { get; set; }
@@ -220,7 +225,7 @@ namespace Bev.IO.BcrWriter
         public void PrepareTrailerSection(Dictionary<string, string> trailerEntries)
         {
             // perform some validity checks
-            if (trailerEntries == null)
+            if (trailerEntries == null) // TODO must include "*" ?
                 return;
             // create the StringBuilder for the file trailer section
             trailerSectionSb = new StringBuilder();
@@ -250,12 +255,15 @@ namespace Bev.IO.BcrWriter
             // for single profiles YScale must be 0
             if (NumberOfProfiles == 1)
                 YScale = 0;
-            // the SDF definition suffers from the historical restriction of 65535 points per profile 
-            // there is no error message up to now, it is just not possible to create data.
-            if (NumberOfPointsPerProfile > ushort.MaxValue)
-                return;
-            if (NumberOfProfiles > ushort.MaxValue)
-                return;
+            if (!Relaxed)
+            {
+                // the SDF definition suffers from the historical restriction of 65535 points per profile 
+                // there is no error message up to now, it is just not possible to create data.
+                if (NumberOfPointsPerProfile > ushort.MaxValue)
+                    return;
+                if (NumberOfProfiles > ushort.MaxValue)
+                    return;
+            }
             // instantiate the StringBuilder for the header section
             headerSectionSb = new StringBuilder();
             if (IsIsoFormat)
