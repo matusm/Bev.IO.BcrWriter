@@ -18,6 +18,8 @@
 //   NumberOfPointsPerProfile and NumberOfProfiles must not be modified during operation
 //
 // Author: Michael Matus, 2017
+//   1.3.0  WriteToFile() returns bool, 2020
+//   1.2.0  property "Relaxed" added
 //   1.1.0	support for int data, 2020
 //   1.0.1	refactored source code, 2020
 //   1.0.0	first working version, 2017
@@ -38,83 +40,49 @@ namespace Bev.IO.BcrWriter
     public class BcrWriter
     {
 
-        #region Private Fields
-
-        ZDataType zDataType;
-
-        /// <summary>
-        /// The whole file contents (three sections) is stored in three StringBuilders.
-        /// </summary>
-        private StringBuilder headerSectionSb;
-        private StringBuilder dataSectionSb;
-        private StringBuilder trailerSectionSb;
-
-        #endregion
-
         #region Properties
 
-        /// <summary>
-        /// If true use ISO 25178-71 format, if false use the legacy BCR format.
-        /// </summary>
-        public bool IsIsoFormat { get; set; }
+        // If true use ISO 25178-71 format, if false use the legacy BCR format.
+        public bool ForceIsoFormat { get; set; }
 
-        /// <summary>
-        /// If true, allow >65535 points per profile and profiles
-        /// </summary>
+        // If true, allow >65535 points per profile and profiles
         public bool Relaxed { get; set; }
 
-        /// <summary>
-        /// If true forces the ".SDF" extension for the output file name.
-        /// </summary>
+        // If true forces the ".SDF" extension for the output file name.
         public bool ForceDefaultFileExtension { get; set; }
 
-        /// <summary>
-        /// The number of points per profile. Mandatory for file header.
-        /// </summary>
-        public int NumberOfPointsPerProfile { get; set; }
+        // The instrument identifier. Mandatory for file header.
+        public string ManufacurerId { get; set; }
 
-        /// <summary>
-        /// The number of profiles. Mandatory for file header.
-        /// </summary>
-        public int NumberOfProfiles { get; set; }
-
-        /// <summary>
-        /// The point spacing in m. Mandatory for file header.
-        /// </summary>
-        public double XScale { get; set; }
-
-        /// <summary>
-        /// The profile spacing in m. Mandatory for file header.
-        /// </summary>
-        public double YScale { get; set; }
-
-        /// <summary>
-        /// The scan's creation date. Mandatory for file header.
-        /// </summary>
+        // The scan's creation date. Mandatory for file header.
         public DateTime CreationDate { get; set; }
 
-        /// <summary>
-        /// The scan's modification date. Mandatory for file header.
-        /// </summary>
+        // The scan's modification date. Mandatory for file header.
         public DateTime ModificationDate { get; set; }
 
-        /// <summary>
-        /// The instrument identifier. Mandatory for file header.
-        /// </summary>
-        public string ManufacurerId { get; set; }
+        // The number of points per profile. Mandatory for file header.
+        public int NumberOfPointsPerProfile { get; set; }
+
+        // The number of profiles. Mandatory for file header.
+        public int NumberOfProfiles { get; set; }
+
+        // The point spacing in m. Mandatory for file header.
+        public double XScale { get; set; }
+
+        // The profile spacing in m. Mandatory for file header.
+        public double YScale { get; set; }
+
         #endregion
 
         #region Ctor
-        /// <summary>
-        /// Creates an instance of the BcrWriter class.
-        /// Sets some properties to default values.
-        /// </summary>
+        // Creates an instance of the BcrWriter class.
+        // Sets some properties to default values.
         public BcrWriter()
         {
             // I am not completely confident on this, but it works.
             Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
             ForceDefaultFileExtension = true;
-            IsIsoFormat = false;
+            ForceIsoFormat = false;
             zDataType = ZDataType.None;
             ModificationDate = DateTime.UtcNow;
         }
@@ -122,30 +90,33 @@ namespace Bev.IO.BcrWriter
 
         #region Public Methods
 
-        /// <summary>
-        /// Writes the data (if present) to a text file.
-        /// </summary>
-        /// <param name="outFileName">The filename.</param>
-        public void WriteToFile(string outFileName)
+        // Writes the formatted data (if present) to a text file.
+        // returns true if successful, false otherwise 
+        public bool WriteToFile(string outFileName)
         {
             // check if data present
-            if (string.IsNullOrWhiteSpace(GetFileContent()))
-                return;
+            if (string.IsNullOrWhiteSpace(DataToString()))
+                return false;
             // change file name extension
             string fileName = outFileName;
             if(ForceDefaultFileExtension)
                 fileName = Path.ChangeExtension(outFileName, ".sdf");
             // write the file
-            StreamWriter hOutFile = File.CreateText(fileName);
-            hOutFile.Write(GetFileContent());
-            hOutFile.Close();
+            try
+            {
+                StreamWriter hOutFile = File.CreateText(fileName);
+                hOutFile.Write(DataToString());
+                hOutFile.Close();
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+            return true;
         }
 
-        /// <summary>
-        /// Returns the formated data (if present) as string.
-        /// </summary>
-        /// <returns>The formated data.</returns>
-        public string GetFileContent()
+        // Returns the formated data (if present) as string.
+        public string DataToString()
         {
             // check if data is already prepared
             if (headerSectionSb == null)
@@ -158,11 +129,9 @@ namespace Bev.IO.BcrWriter
             return returnString;
         }
 
-        /// <summary>
-        /// Prepares the header and data section. 
-        /// "Record 1" and "Record 2" according to ISO 25178-71
-        /// </summary>
-        /// <param name="topographyData">The topography data in units of meter.</param>
+        // Prepares the header and data section. 
+        // "Record 1" and "Record 2" according to ISO 25178-71
+        // The topography data in units of meter.
         public void PrepareMainSection(double[] topographyData)
         {
             zDataType = ZDataType.Double;
@@ -191,11 +160,9 @@ namespace Bev.IO.BcrWriter
             dataSectionSb.AppendLine("*");
         }
 
-        /// <summary>
-        /// Prepares the header and data section. 
-        /// "Record 1" and "Record 2" according to ISO 25178-71
-        /// </summary>
-        /// <param name="topographyData">The topography data in units of micrometer.</param>
+        // Prepares the header and data section. 
+        // "Record 1" and "Record 2" according to ISO 25178-71
+        // The topography data in units of micrometer.
         public void PrepareMainSection(int[] topographyData)
         {
             zDataType = ZDataType.Int32;
@@ -217,22 +184,19 @@ namespace Bev.IO.BcrWriter
             dataSectionSb.AppendLine("*");
         }
 
-        /// <summary>
-        /// Prepares the (optional) trailer section.
+        /// Prepares the (optional) trailer section from a given dictionary.
         /// "Record 3" according to ISO 25178-71
-        /// </summary>
-        /// <param name="trailerEntries"></param>
         public void PrepareTrailerSection(Dictionary<string, string> trailerEntries)
         {
             // perform some validity checks
-            if (trailerEntries == null) // TODO must include "*" ?
+            if (trailerEntries == null) // TODO clarify if empty trailer section must include "*" ?
                 return;
             // create the StringBuilder for the file trailer section
             trailerSectionSb = new StringBuilder();
             // add assembly version information as the last entry
             trailerEntries["AssemblyName"] = Assembly.GetEntryAssembly().GetName().Name;
             Version ver = Assembly.GetEntryAssembly().GetName().Version;
-            trailerEntries["AssemblyVersion"] = string.Format("{0}.{1}", ver.Major, ver.Minor);
+            trailerEntries["AssemblyVersion"] = $"{ver.Major}.{ver.Minor}";
             // padd all keys to the same length
             Dictionary<string, string> niceEntries = BeautifyKeyStrings(trailerEntries);
             // iterate the dictonary
@@ -246,10 +210,8 @@ namespace Bev.IO.BcrWriter
 
         #region Private Methods
 
-        /// <summary>
-        /// Prepares the SDF file header section. Respective properties must be set in advance.
-        /// Constitutes "Record 1" according to ISO 25178-71
-        /// </summary>
+        // Prepares the SDF file header section. Respective properties must be set in advance.
+        // Constitutes "Record 1" according to ISO 25178-71
         private void PrepareHeaderSection()
         {
             // for single profiles YScale must be 0
@@ -266,7 +228,7 @@ namespace Bev.IO.BcrWriter
             }
             // instantiate the StringBuilder for the header section
             headerSectionSb = new StringBuilder();
-            if (IsIsoFormat)
+            if (ForceIsoFormat)
             {
                 headerSectionSb.AppendLine("aISO-1.0");
             }
@@ -303,11 +265,7 @@ namespace Bev.IO.BcrWriter
             headerSectionSb.AppendLine("*");
         }
 
-        /// <summary>
-        /// Formats a given directory by trimming the values (strings) and padding the keys to the maximum length of all keys (strings).
-        /// </summary>
-        /// <param name="rawDictonary">The dictonary to be beautified.</param>
-        /// <returns>The beautified dictonary.</returns>
+        // Formats a given directory by trimming the values (strings) and padding the keys to the maximum length of all keys (strings).
         private Dictionary<string, string> BeautifyKeyStrings(Dictionary<string, string> rawDictonary)
         {
             // determine the length of the longest (trimmed) key
@@ -321,48 +279,45 @@ namespace Bev.IO.BcrWriter
             return processedDictonary;
         }
 
-        /// <summary>
-        /// Prepares a line for the file trailer in on of two possible formats.
-        /// </summary>
-        /// <param name="key">The metadata key.</param>
-        /// <param name="value">The metadata value for the key.</param>
-        /// <returns>A line of text for the file trailer section.</returns>
+        // Prepares a line for the file trailer in on of two possible formats.
         private string BcrTrailerLine(string key, string value)
         {
             return BcrTrailerLine(key, value, "");
         }
 
-        /// <summary>
-        /// Prepares a line for the file trailer in on of two possible formats.
-        /// A comment can be included also.
-        /// </summary>
-        /// <param name="key">The metadata key.</param>
-        /// <param name="value">The metadata value for the key.</param>
-        /// <param name="comment">A comment.</param>
-        /// <returns>A line of text for the file trailer section.</returns>
-        /// <remarks>
-        /// Any information following a ";" is considered as a comment according to section 8.3 of ISO 25178-7.
-        /// This behaviour is not defined in ISO 25178-71 however, so comments are suppressed in this case.
-        /// </remarks>
+        // Prepares a line for the file trailer in on of two possible formats.
+        // A comment can be included also.
+        // Any information following a ";" is considered as a comment according to section 8.3 of ISO 25178-7.
+        // This behaviour is not defined in ISO 25178-71 however, so comments are suppressed in this case.
         private string BcrTrailerLine(string key, string value, string comment)
         {
             string returnString;
-            if(IsIsoFormat)
+            if(ForceIsoFormat)
                 returnString = $"<{key.Trim()}> {value.Trim()} </{key.Trim()}>";
             else
                 returnString = $"{key.TrimStart()} = {value.Trim()}";
             // append a comment if appropiate
-            if (!string.IsNullOrWhiteSpace(comment) && !IsIsoFormat)
+            if (!string.IsNullOrWhiteSpace(comment) && !ForceIsoFormat)
                 returnString += $" ; {comment.Trim()}";
             return returnString;
         }
 
         #endregion
+
+        #region Private Fields
+
+        // this field is to controll the "DataType" in the header
+        ZDataType zDataType;
+        // The whole file contents (three sections) is stored in three StringBuilders.
+        private StringBuilder headerSectionSb;
+        private StringBuilder dataSectionSb;
+        private StringBuilder trailerSectionSb;
+
+        #endregion
+
     }
 
-    /// <summary>
-    /// Allowed data types, ISO 25178-71 clause 5.2.10
-    /// </summary>
+    // Allowed data types, ISO 25178-71 clause 5.2.10
     enum ZDataType
     {
         None,
