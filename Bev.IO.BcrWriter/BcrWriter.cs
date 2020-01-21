@@ -193,10 +193,6 @@ namespace Bev.IO.BcrWriter
                 return;
             // create the StringBuilder for the file trailer section
             trailerSectionSb = new StringBuilder();
-            // add assembly version information as the last entry
-            trailerEntries["AssemblyName"] = Assembly.GetEntryAssembly().GetName().Name;
-            Version ver = Assembly.GetEntryAssembly().GetName().Version;
-            trailerEntries["AssemblyVersion"] = $"{ver.Major}.{ver.Minor}";
             // padd all keys to the same length
             Dictionary<string, string> niceEntries = BeautifyKeyStrings(trailerEntries);
             // iterate the dictonary
