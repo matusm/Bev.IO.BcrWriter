@@ -232,7 +232,7 @@ namespace Bev.IO.BcrWriter
             {
                 headerSectionSb.AppendLine("aBCR-1.0");
             }
-            headerSectionSb.AppendLine($"ManufacID   = {ManufacurerId}");
+            headerSectionSb.AppendLine($"ManufacID   = {BcrEncode(ManufacurerId)}"); // just tu make sure no "=" is added
             headerSectionSb.AppendLine($"CreateDate  = {CreationDate.ToString("ddMMyyyyHHmm")}");
             headerSectionSb.AppendLine($"ModDate     = {ModificationDate.ToString("ddMMyyyyHHmm")}");
             headerSectionSb.AppendLine($"NumPoints   = {NumberOfPointsPerProfile}");
@@ -271,7 +271,7 @@ namespace Bev.IO.BcrWriter
             // build the beautified dictonary
             Dictionary<string, string> processedDictonary = new Dictionary<string, string>();
             foreach (string k in rawDictonary.Keys)
-                processedDictonary[k.Trim().PadRight(maxKeyLength)] = rawDictonary[k].Trim();
+                processedDictonary[BcrEncode(k.Trim().PadRight(maxKeyLength))] = BcrEncode(rawDictonary[k].Trim());
             return processedDictonary;
         }
 
@@ -285,6 +285,7 @@ namespace Bev.IO.BcrWriter
         // A comment can be included also.
         // Any information following a ";" is considered as a comment according to section 8.3 of ISO 25178-7.
         // This behaviour is not defined in ISO 25178-71 however, so comments are suppressed in this case.
+        // anyway this method is private, therefore probably obsolete
         private string BcrTrailerLine(string key, string value, string comment)
         {
             string returnString;
@@ -296,6 +297,17 @@ namespace Bev.IO.BcrWriter
             if (!string.IsNullOrWhiteSpace(comment) && !ForceIsoFormat)
                 returnString += $" ; {comment.Trim()}";
             return returnString;
+        }
+
+        // encodes a string to be safely used in the header and trailer sections
+        // replaces =, >, < with safe characters
+        // take care that the length of the string is not changed 
+        private string BcrEncode(string rawStr)
+        {
+            string encStr = rawStr.Replace(@"=", @":");
+            encStr = encStr.Replace(@"<", @"[");
+            encStr = encStr.Replace(@">", @"]");
+            return encStr;
         }
 
         #endregion
