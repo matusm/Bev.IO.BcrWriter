@@ -18,6 +18,7 @@
 //   NumberOfPointsPerProfile and NumberOfProfiles must not be modified during operation
 //
 // Author: Michael Matus, 2017
+//   1.3.3  empty trailer finishes with the delimiter "*", 2020
 //   1.3.0  WriteToFile() returns bool, 2020
 //   1.2.0  property "Relaxed" added
 //   1.1.0	support for int data, 2020
@@ -31,7 +32,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Reflection;
 using System.Text;
 using System.Threading;
 
@@ -123,9 +123,7 @@ namespace Bev.IO.BcrWriter
                 return "";
             if (dataSectionSb == null)
                 return "";
-            string returnString = headerSectionSb.ToString() + dataSectionSb.ToString();
-            if (trailerSectionSb != null)
-                returnString += trailerSectionSb.ToString();
+            string returnString = headerSectionSb.ToString() + dataSectionSb.ToString() + trailerSectionSb.ToString();
             return returnString;
         }
 
@@ -188,11 +186,14 @@ namespace Bev.IO.BcrWriter
         /// "Record 3" according to ISO 25178-71
         public void PrepareTrailerSection(Dictionary<string, string> trailerEntries)
         {
-            // perform some validity checks
-            if (trailerEntries == null) // TODO clarify if empty trailer section must include "*" ?
-                return;
             // create the StringBuilder for the file trailer section
             trailerSectionSb = new StringBuilder();
+            // perform some validity checks
+            if (trailerEntries == null)
+            {
+                trailerSectionSb.AppendLine("*");
+                return;
+            }
             // padd all keys to the same length
             Dictionary<string, string> niceEntries = BeautifyKeyStrings(trailerEntries);
             // iterate the dictonary
