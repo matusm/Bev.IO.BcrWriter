@@ -18,7 +18,7 @@
 //   NumberOfPointsPerProfile and NumberOfProfiles must not be modified during operation
 //
 // Author: Michael Matus, 2017
-//   1.3.3  empty trailer finishes with the delimiter "*", 2020
+//   1.3.3  empty trailer ends with the delimiter "*", 2020
 //   1.3.0  WriteToFile() returns bool, 2020
 //   1.2.0  property "Relaxed" added
 //   1.1.0	support for int data, 2020
@@ -151,7 +151,7 @@ namespace Bev.IO.BcrWriter
                 }
                 else
                 {
-                    dataSectionSb.AppendLine($"{z*1e6:F5}");
+                    dataSectionSb.AppendLine($"{z*1e6:F5}"); // fixed resolution of 10 pm
                 }
             }
             // End of section delimiter
@@ -240,9 +240,9 @@ namespace Bev.IO.BcrWriter
             headerSectionSb.AppendLine($"NumProfiles = {NumberOfProfiles}");
             headerSectionSb.AppendLine($"Xscale      = {XScale.ToString("G5")}");
             headerSectionSb.AppendLine($"Yscale      = {YScale.ToString("G5")}");
-            headerSectionSb.AppendLine("Zscale      = 1E-06"); // always use µm
-            headerSectionSb.AppendLine("Zresolution = -1"); // clause 5.2.8, do not modify!
-            headerSectionSb.AppendLine("Compression = 0"); // clause 5.2.9, do not modify!
+            headerSectionSb.AppendLine( "Zscale      = 1E-06"); // always use µm
+            headerSectionSb.AppendLine( "Zresolution = -1"); // clause 5.2.8, do not modify!
+            headerSectionSb.AppendLine( "Compression = 0"); // clause 5.2.9, do not modify!
             switch (zDataType)
             {
                 case ZDataType.Double:
