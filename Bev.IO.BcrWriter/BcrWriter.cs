@@ -151,7 +151,7 @@ namespace Bev.IO.BcrWriter
                 }
                 else
                 {
-                    dataSectionSb.AppendLine($"{z*1e6:F5}"); // fixed resolution of 10 pm
+                    dataSectionSb.AppendLine($"{z*1e6:F6}"); // fixed resolution of 1 pm
                 }
             }
             // End of section delimiter
