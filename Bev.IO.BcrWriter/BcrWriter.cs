@@ -301,13 +301,15 @@ namespace Bev.IO.BcrWriter
         }
 
         // encodes a string to be safely used in the header and trailer sections
-        // replaces =, >, < with safe characters
+        // replaces =, >, <, * with safe characters
         // take care that the length of the string is not changed 
         private string BcrEncode(string rawStr)
         {
             string encStr = rawStr.Replace(@"=", @":");
             encStr = encStr.Replace(@"<", @"[");
             encStr = encStr.Replace(@">", @"]");
+            encStr = encStr.Replace(@"\", @"|");
+            encStr = encStr.Replace(@"*", @"#");
             return encStr;
         }
 
@@ -315,7 +317,7 @@ namespace Bev.IO.BcrWriter
 
         #region Private Fields
 
-        // this field is to controll the "DataType" in the header
+        // this field is to control the "DataType" in the header
         ZDataType zDataType;
         // The whole file contents (three sections) is stored in three StringBuilders.
         private StringBuilder headerSectionSb;
