@@ -46,6 +46,7 @@ namespace Bev.IO.BcrWriter
         public bool ForceIsoFormat { get; set; }
 
         // If true, allow >65535 points per profile and profiles
+        // and longer ManufacurerId
         public bool Relaxed { get; set; }
 
         // If true forces the ".SDF" extension for the output file name.
@@ -83,6 +84,7 @@ namespace Bev.IO.BcrWriter
             Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
             ForceDefaultFileExtension = true;
             ForceIsoFormat = false;
+            Relaxed = true;
             zDataType = ZDataType.None;
             ModificationDate = DateTime.UtcNow;
         }
@@ -233,7 +235,7 @@ namespace Bev.IO.BcrWriter
             {
                 headerSectionSb.AppendLine("aBCR-1.0");
             }
-            headerSectionSb.AppendLine($"ManufacID   = {BcrEncode(ManufacurerId)}"); // just tu make sure no "=" is added
+            headerSectionSb.AppendLine($"ManufacID   = {TruncateManufacID(ManufacurerId)}"); // just to make sure no "=" is added
             headerSectionSb.AppendLine($"CreateDate  = {CreationDate.ToString("ddMMyyyyHHmm")}");
             headerSectionSb.AppendLine($"ModDate     = {ModificationDate.ToString("ddMMyyyyHHmm")}");
             headerSectionSb.AppendLine($"NumPoints   = {NumberOfPointsPerProfile}");
@@ -311,6 +313,21 @@ namespace Bev.IO.BcrWriter
             encStr = encStr.Replace(@"\", @"|");
             encStr = encStr.Replace(@"*", @"#");
             return encStr;
+        }
+
+        private string TruncateManufacID(string s)
+        {
+            const int maxChars = 10;
+            if (string.IsNullOrEmpty(s))
+                return s;
+            string retString = BcrEncode(s.Trim());
+            if (!Relaxed)
+            {
+                if (retString.Length <= maxChars)
+                    return retString;
+                return retString.Substring(0, maxChars);
+            }
+            return retString;
         }
 
         #endregion
