@@ -274,7 +274,11 @@ namespace Bev.IO.BcrWriter
             // build the beautified dictonary
             Dictionary<string, string> processedDictonary = new Dictionary<string, string>();
             foreach (string k in rawDictonary.Keys)
-                processedDictonary[BcrEncode(k.Trim().PadRight(maxKeyLength))] = BcrEncode(rawDictonary[k].Trim());
+            {
+                string newValue = BcrEncode(rawDictonary[k].Trim());
+                if(!string.IsNullOrEmpty(newValue))
+                    processedDictonary[BcrEncode(k.Trim().PadRight(maxKeyLength))] = newValue;
+            }
             return processedDictonary;
         }
 
