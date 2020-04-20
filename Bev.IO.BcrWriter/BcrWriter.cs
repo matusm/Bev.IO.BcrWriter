@@ -10,14 +10,17 @@
 //   5) finally produce the output file by calling WriteToFile(string).
 //
 // Caveat:
-//   PrepareMainSection(double[]) multiplies the z-data with 1e6 (assuming data is in m)
-//   PrepareMainSection(int[]) uses z-data unmodified (assuming data is in µm)
+//   PrepareMainSection(double[]) multiplies the Zscale (assuming data is in m)
+//   PrepareMainSection(int[]) uses z-data unmodified (assuming data is in µm) and sets
+//   Zscale to 1e-6
 //
 // Known problems and restrictions:
 //   most properties must be set in advance, otherwise no output will be generated
 //   NumberOfPointsPerProfile and NumberOfProfiles must not be modified during operation
 //
 // Author: Michael Matus, 2017
+//   2.0.0  Zscale necessary, Round-trip format of double values,
+//          "NaN" instead of "BAD", 2020
 //   1.3.3  empty trailer ends with the delimiter "*", 2020
 //   1.3.0  WriteToFile() returns bool, 2020
 //   1.2.0  property "Relaxed" added
@@ -72,6 +75,9 @@ namespace Bev.IO.BcrWriter
 
         // The profile spacing in m. Mandatory for file header.
         public double YScale { get; set; }
+
+        // Z scaling factor in m. Mandatory for file header.
+        public double ZScale { get; set; }
 
         #endregion
 
@@ -131,7 +137,7 @@ namespace Bev.IO.BcrWriter
 
         // Prepares the header and data section. 
         // "Record 1" and "Record 2" according to ISO 25178-71
-        // The topography data in units of meter.
+        // The topography data must be provided in units of meter and is scaled by Zscale 
         public void PrepareMainSection(double[] topographyData)
         {
             zDataType = ZDataType.Double;
@@ -149,11 +155,12 @@ namespace Bev.IO.BcrWriter
             {
                 if (double.IsNaN(z))
                 {
-                    dataSectionSb.AppendLine("BAD"); // ISO 25178-71 clause 5.3.2
+                    dataSectionSb.AppendLine("NaN"); // This works with Gwyddion
+                    //dataSectionSb.AppendLine("BAD"); // ISO 25178-71 clause 5.3.2
                 }
                 else
                 {
-                    dataSectionSb.AppendLine($"{z*1e6:F6}"); // fixed resolution of 1 pm
+                    dataSectionSb.AppendLine($"{z/ZScale:G17}"); // Round-trip format
                 }
             }
             // End of section delimiter
@@ -163,6 +170,7 @@ namespace Bev.IO.BcrWriter
         // Prepares the header and data section. 
         // "Record 1" and "Record 2" according to ISO 25178-71
         // The topography data in units of micrometer.
+        // Zscale is (re)set to 1e-6
         public void PrepareMainSection(int[] topographyData)
         {
             zDataType = ZDataType.Int32;
@@ -172,6 +180,7 @@ namespace Bev.IO.BcrWriter
             if (topographyData.Length != NumberOfPointsPerProfile * NumberOfProfiles)
                 return;
             // prepare the header section
+            ZScale = 1.0e-6;
             PrepareHeaderSection();
             // create the StringBuilder for the data section
             dataSectionSb = new StringBuilder();
@@ -240,9 +249,9 @@ namespace Bev.IO.BcrWriter
             headerSectionSb.AppendLine($"ModDate     = {ModificationDate.ToString("ddMMyyyyHHmm")}");
             headerSectionSb.AppendLine($"NumPoints   = {NumberOfPointsPerProfile}");
             headerSectionSb.AppendLine($"NumProfiles = {NumberOfProfiles}");
-            headerSectionSb.AppendLine($"Xscale      = {XScale.ToString("G5")}");
-            headerSectionSb.AppendLine($"Yscale      = {YScale.ToString("G5")}");
-            headerSectionSb.AppendLine( "Zscale      = 1E-06"); // always use µm
+            headerSectionSb.AppendLine($"Xscale      = {XScale.ToString("G17")}");
+            headerSectionSb.AppendLine($"Yscale      = {YScale.ToString("G17")}");
+            headerSectionSb.AppendLine($"Zscale      = {ZScale.ToString("G17")}");
             headerSectionSb.AppendLine( "Zresolution = -1"); // clause 5.2.8, do not modify!
             headerSectionSb.AppendLine( "Compression = 0"); // clause 5.2.9, do not modify!
             switch (zDataType)
