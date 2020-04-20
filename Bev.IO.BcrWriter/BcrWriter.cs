@@ -93,6 +93,9 @@ namespace Bev.IO.BcrWriter
             Relaxed = true;
             zDataType = ZDataType.None;
             ModificationDate = DateTime.UtcNow;
+            XScale = double.NaN;
+            YScale = double.NaN;
+            ZScale = double.NaN;
         }
         #endregion
 
@@ -174,13 +177,13 @@ namespace Bev.IO.BcrWriter
         public void PrepareMainSection(int[] topographyData)
         {
             zDataType = ZDataType.Int32;
+            ZScale = 1.0e-6;
             // perform some validity checks
             if (topographyData == null)
                 return;
             if (topographyData.Length != NumberOfPointsPerProfile * NumberOfProfiles)
                 return;
             // prepare the header section
-            ZScale = 1.0e-6;
             PrepareHeaderSection();
             // create the StringBuilder for the data section
             dataSectionSb = new StringBuilder();
@@ -225,6 +228,12 @@ namespace Bev.IO.BcrWriter
             // for single profiles YScale must be 0
             if (NumberOfProfiles == 1)
                 YScale = 0;
+            if (double.IsNaN(XScale))
+                return;
+            if (double.IsNaN(YScale))
+                return;
+            if (double.IsNaN(ZScale))
+                return;
             if (!Relaxed)
             {
                 // the SDF definition suffers from the historical restriction of 65535 points per profile 
