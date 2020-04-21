@@ -158,8 +158,7 @@ namespace Bev.IO.BcrWriter
             {
                 if (double.IsNaN(z))
                 {
-                    dataSectionSb.AppendLine("NaN"); // This works with Gwyddion
-                    //dataSectionSb.AppendLine("BAD"); // ISO 25178-71 clause 5.3.2
+                    dataSectionSb.AppendLine(Relaxed ? "NaN" : "BAD"); // ISO 25178-71 clause 5.3.2 : Gwyddion
                 }
                 else
                 {
