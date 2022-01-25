@@ -18,7 +18,8 @@
 //   most properties must be set in advance, otherwise no output will be generated
 //   NumberOfPointsPerProfile and NumberOfProfiles must not be modified during operation
 //
-// Author: Michael Matus, 2017
+// Author: Michael Matus, 2017-2022
+//   2.0.1  little code refactoring, 2022 
 //   2.0.0  Zscale necessary, Round-trip format of double values,
 //          "NaN" instead of "BAD", 2020
 //   1.3.3  empty trailer ends with the delimiter "*", 2020
@@ -29,7 +30,6 @@
 //   1.0.0	first working version, 2017
 //
 //*******************************************************************************************
-
 
 using System;
 using System.Collections.Generic;
@@ -42,8 +42,6 @@ namespace Bev.IO.BcrWriter
 {
     public class BcrWriter
     {
-
-        #region Properties
 
         // If true use ISO 25178-71 format, if false use the legacy BCR format.
         public bool ForceIsoFormat { get; set; }
@@ -79,11 +77,7 @@ namespace Bev.IO.BcrWriter
         // Z scaling factor in m. Mandatory for file header.
         public double ZScale { get; set; }
 
-        #endregion
 
-        #region Ctor
-        // Creates an instance of the BcrWriter class.
-        // Sets some properties to default values.
         public BcrWriter()
         {
             // I am not completely confident on this, but it works.
@@ -97,9 +91,6 @@ namespace Bev.IO.BcrWriter
             YScale = double.NaN;
             ZScale = double.NaN;
         }
-        #endregion
-
-        #region Public Methods
 
         // Writes the formatted data (if present) to a text file.
         // returns true if successful, false otherwise 
@@ -215,10 +206,6 @@ namespace Bev.IO.BcrWriter
             // End of section delimiter
             trailerSectionSb.AppendLine("*");
         }
-
-        #endregion
-
-        #region Private Methods
 
         // Prepares the SDF file header section. Respective properties must be set in advance.
         // Constitutes "Record 1" according to ISO 25178-71
@@ -351,9 +338,6 @@ namespace Bev.IO.BcrWriter
             return retString;
         }
 
-        #endregion
-
-        #region Private Fields
 
         // this field is to control the "DataType" in the header
         ZDataType zDataType;
@@ -361,8 +345,6 @@ namespace Bev.IO.BcrWriter
         private StringBuilder headerSectionSb;
         private StringBuilder dataSectionSb;
         private StringBuilder trailerSectionSb;
-
-        #endregion
 
     }
 
