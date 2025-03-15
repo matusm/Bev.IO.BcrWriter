@@ -18,7 +18,8 @@
 //   most properties must be set in advance, otherwise no output will be generated
 //   NumberOfPointsPerProfile and NumberOfProfiles must not be modified during operation
 //
-// Author: Michael Matus, 2017-2022
+// Author: Michael Matus, 2017-2025
+//   2.1.0  no longer forces zero width for single profiles
 //   2.0.1  little code refactoring, 2022 
 //   2.0.0  Zscale necessary, Round-trip format of double values,
 //          "NaN" instead of "BAD", 2020
@@ -211,9 +212,6 @@ namespace Bev.IO.BcrWriter
         // Constitutes "Record 1" according to ISO 25178-71
         private void PrepareHeaderSection()
         {
-            // for single profiles YScale must be 0
-            if (NumberOfProfiles == 1)
-                YScale = 0;
             if (double.IsNaN(XScale))
                 return;
             if (double.IsNaN(YScale))
